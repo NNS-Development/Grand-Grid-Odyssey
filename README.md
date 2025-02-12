@@ -1,8 +1,9 @@
-# Tic-tac-toe
-Python Tic-tac-toe game against a bot (or another player)
+# TicTacToe
+Python TicTacToe game against a bot  
+MAJOR improvements by [me](https://github.com/ellipticobj)  
 
 ## how to play
-just download this repo, then run main.py.
+just download this repo, then run main.py or download an executable from [here]{https://github.com/ellipticobj/TicTacToe/releases/tag/v0.0.0}
 
 ## screenshots
 ![tie](images/tie.png)
@@ -11,7 +12,7 @@ just download this repo, then run main.py.
 ## building
 run ./build.sh  
 note that this may not work on all systems. do not open an issue as i will not care.  
-if it doesnt work, check out (pyinstaller)[https://pyinstaller.org/en/stable/]
+if it doesnt work, check out [pyinstaller](https://pyinstaller.org/en/stable/)
 
 ## roadmap
 add option to choose to start first  
