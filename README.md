@@ -1,5 +1,5 @@
-# TicTacToe
-Python TicTacToe game against a bot  
+# Tic-tac-toe
+Python Tic-tac-toe game against a bot (or another player)
 
 ## how to play
 just download this repo, then run main.py.
