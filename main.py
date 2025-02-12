@@ -121,15 +121,24 @@ class TicTacToe():
         offsety = (maxy - boardh) // 2
         offsetx = (maxx - boardw) // 2
 
-        # TODO: use curses.hline and vline
+        # horizontal lines
         for i in range(self.side+1):
             y = offsety + i * (self.side+1)
             self.boardwin.hline(y, offsetx, curses.ACS_HLINE, boardw)
 
+        # vertical lines
         for i in range(self.side+1):
             x = offsetx + i * ((self.side+1)*2)
             self.boardwin.vline(offsety, x, curses.ACS_VLINE, boardh)
 
+        # intersections
+        for i in range(4):
+            for j in range(4):
+                y = offsety + i * 4
+                x = offsetx + j * 8
+                self.boardwin.addch(y, x, curses.ACS_PLUS)
+
+        # inserting x and o
         for r in range(self.side):
             for c in range(self.side):
                 token = self.board[r][c]
