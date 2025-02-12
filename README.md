@@ -1,6 +1,6 @@
 # TicTacToe
 Python TicTacToe game against a bot  
-MAJOR improvements by (me)[https://github.com/ellipticobj]  
+MAJOR improvements by [me](https://github.com/ellipticobj)  
 
 ## how to play
 just download this repo, then run main.py.
