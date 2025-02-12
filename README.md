@@ -10,5 +10,5 @@ just download this repo, then run main.py.
 ![newgame](images/newgame.png)
 
 ## roadmap
-choose to start first  
-two player mode
+add option to choose to start first  
+add a two player mode (instead of just vs ai)
