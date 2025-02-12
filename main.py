@@ -1,4 +1,3 @@
-from ast import Str
 import curses
 from random import choice
 
@@ -123,14 +122,26 @@ class TicTacToe():
         offsetx = (maxx - boardw) // 2
 
         # TODO: use curses.hline and vline
-        for i in range(4):
+        for i in range(self.side+1):
             y = offsety + i * (self.side+1)
             self.boardwin.hline(y, offsetx, curses.ACS_HLINE, boardw)
 
-        for i in range(4):
-            x = offsetx + i * (self.side+1)
-            self.boardwin.vline(offsety, x, curses.ACS_VLINE, boardw)
+        for i in range(self.side+1):
+            x = offsetx + i * ((self.side+1)*2)
+            self.boardwin.vline(offsety, x, curses.ACS_VLINE, boardh)
 
+        for r in range(self.side):
+            for c in range(self.side):
+                token = self.board[r][c]
+                celly = offsety + r * (self.side+1) + 2
+                cellx = offsetx + c * ((self.side+1)*2) + 4
+                if token == 'X':
+                    attr = curses.color_pair(1) | curses.A_BOLD
+                elif token == 'O':
+                    attr = curses.color_pair(2) | curses.A_BOLD
+                else:
+                    attr = curses.color_pair(3)
+                self.boardwin.addstr(celly, cellx, token, attr)
 
         self.boardwin.refresh()
         self.msgwin.refresh()
