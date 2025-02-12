@@ -1,3 +1,4 @@
+from ast import Str
 import curses
 from random import choice
 
@@ -51,12 +52,13 @@ class TicTacToe():
                                 else:
                                     self.msgwin.addstr("⚠️ Field already occupied! Try again.\n")
                                     self.msgwin.refresh()
+                                    buf = ''
                                     continue
                             except (ValueError, IndexError):
                                 self.msgwin.addstr("⚠️ Invalid input! Enter a number between 1 and 9.\n")
                                 self.msgwin.refresh()
+                                buf = ''
                                 continue
-                        buf = ''
                     case curses.KEY_BACKSPACE | 127:
                         buf = buf[:-1]
                     case _ if 0 <= key < 256:
@@ -91,22 +93,19 @@ class TicTacToe():
     def makemove(self):
         free = self.getfreefields()
         if not free:
-            return
+            return ""
         if self.isuserturn:
-            return
+            return ""
         free = self.getfreefields()
         best_move = self.getbestmove('X') or self.getbestmove('O')
         row, col = best_move if best_move else choice(free)
         self.board[row][col] = 'X'
-        self.msgwin.addstr(f"🤖 AI places 'X' at position {row * 3 + col + 1}\n")
-        self.msgwin.refresh()
-        return
+        return f"🤖 AI places 'X' at position {row * 3 + col + 1}\n"
 
     def display(self):
         '''displays the board (also centers it :3)'''
         self.stdscr.clear()
         self.boardwin.clear()
-        self.msgwin.clear()
 
         boardstate = "+-------" * 3 + "+\n"
         for row in self.board:
@@ -142,7 +141,10 @@ class TicTacToe():
                         self.msgwin.refresh()
                         break
             else:
-                self.makemove()
+                msg = self.makemove()
+                if msg:
+                    self.msgwin.addstr(msg)
+                    self.msgwin.refresh()
                 if self.isvictor('X'):
                     self.display()
                     self.msgwin.addstr("🤖 I won! Better luck next time!\n")
