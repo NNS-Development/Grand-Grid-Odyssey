@@ -6,7 +6,8 @@ class TicTacToe():
         self.stdscr = stdscr
         self.running = True
         self.board = [[str(3 * j + i + 1) for i in range(3)] for j in range(3)]
-        self.isuserturn = False
+        self.board[1][1] = 'X'
+        self.isuserturn = True
 
         self.setupui()
         self.display()
@@ -18,19 +19,17 @@ class TicTacToe():
 
         self.rows, self.cols = self.stdscr.getmaxyx()
 
-        self.boardwin = curses.newwin(self.rows-3, self.cols, 0, 0)
-        self.msgwin = curses.newwin(2, self.cols-2, self.rows, 0)
-        self.inputwin = curses.newwin(1, self.cols, self.rows, 0)
-
+        self.boardwin = curses.newwin(self.rows - 2, self.cols, 0, 0)
+        self.msgwin = curses.newwin(2, self.cols, self.rows - 2, 0)
+        self.inputwin = curses.newwin(1, self.cols, self.rows - 1, 0)
         self.msgwin.scrollok(True)
 
     def receive(self):
         '''receive user input'''
-
         prompt = "enter move (1-9): "
+        buf = ''
 
         while self.isuserturn:
-            buf = ''
             try:
                 self.inputwin.clear()
                 self.inputwin.addstr(0, 0, prompt + buf)
@@ -42,32 +41,35 @@ class TicTacToe():
                     case curses.KEY_ENTER | 10 | 13:
                         if buf.strip():
                             try:
-                                buf = int(buf)-1
-                                row, col = divmod(buf, 3)
+                                move = int(buf) - 1
+                                row, col = divmod(move, 3)
                                 if self.board[row][col] not in ["O", "X"]:
                                     self.board[row][col] = "O"
-                                    yield buf
+                                    yield row, col
                                     buf = ''
-                                    return buf
+                                    break
                                 else:
-                                    self.msgwin.addstr("⚠️ Field already occupied! Try again.")
-                                    buf = ''
+                                    self.msgwin.addstr("⚠️ Field already occupied! Try again.\n")
+                                    self.msgwin.refresh()
                                     continue
                             except (ValueError, IndexError):
-                                self.msgwin.addstr(0, 0, "⚠️ Invalid input! Enter a number between 1 and 9.")
-                                buf = ''
+                                self.msgwin.addstr("⚠️ Invalid input! Enter a number between 1 and 9.\n")
+                                self.msgwin.refresh()
                                 continue
+                        buf = ''
                     case curses.KEY_BACKSPACE | 127:
                         buf = buf[:-1]
                     case _ if 0 <= key < 256:
                         buf += chr(key)
-            except Exception as e:
+                    case _:
+                        pass
+            except Exception:
                 self.running = False
 
-    def make_list_of_free_fields(self):
+    def getfreefields(self):
         return [(r, c) for r in range(3) for c in range(3) if self.board[r][c] not in ['O', 'X']]
 
-    def victory_for(self, sgn):
+    def isvictor(self, sgn):
         for row in self.board:
             if all(cell == sgn for cell in row):
                 return True
@@ -78,81 +80,92 @@ class TicTacToe():
             return True
         return False
 
-    def draw_move(self):
-        free = self.make_list_of_free_fields()
-        best_move = find_best_move(self.board, 'X') or find_best_move(self.board, 'O')
-        if best_move:
-            row, col = best_move
-        else:
-            row, col = choice(free)
-        self.board[row][col] = 'X'
-        displaytext = f"🤖 AI places 'X' at position {row*3+col+1}"
-        self.msgwin.addstr(f"🤖 AI places 'X' at position {row*3+col+1}")
-
-    def find_best_move(self, sgn):
-        free = self.make_list_of_free_fields()
+    def getbestmove(self, sgn):
+        free = self.getfreefields()
         for row, col in free:
             self.board[row][col] = sgn
-            if self.victory_for(sgn):
+            if self.isvictor(sgn):
                 return row, col
             self.board[row][col] = str(3 * row + col + 1)  # Undo the move
-        return None
+
+    def makemove(self):
+        free = self.getfreefields()
+        if not free:
+            return
+        if self.isuserturn:
+            return
+        free = self.getfreefields()
+        best_move = self.getbestmove('X') or self.getbestmove('O')
+        row, col = best_move if best_move else choice(free)
+        self.board[row][col] = 'X'
+        self.msgwin.addstr(f"🤖 AI places 'X' at position {row * 3 + col + 1}\n")
+        self.msgwin.refresh()
+        return
 
     def display(self):
-        '''displays the board'''
+        '''displays the board (also centers it :3)'''
         self.stdscr.clear()
-        self.stdscr.refresh()
-        win = self.boardwin
-        boardstate = ""
+        self.boardwin.clear()
+        self.msgwin.clear()
 
-        boardstate += "+-------" * 3 + "+\n"
+        boardstate = "+-------" * 3 + "+\n"
         for row in self.board:
             boardstate += "|       " * 3 + "|\n"
             boardstate += "|   " + "   |   ".join(row) + "   |\n"
             boardstate += "|       " * 3 + "|\n"
-            boardstate += "+-------" * 3 + "+"
+            boardstate += "+-------" * 3 + "+\n"
 
-        win.addstr(0, 0, boardstate)
+        boardlines = boardstate.splitlines()
+        boardh = len(boardlines)
+        boardw = max(len(line) for line in boardlines)
+
+        maxy, maxx = self.boardwin.getmaxyx()
+        offsety = (maxy - boardh) // 2
+        offsetx = (maxx - boardw) // 2
+
+        for i, line in enumerate(boardlines):
+            self.boardwin.addstr(offsety + i, offsetx, line)
+
+        self.boardwin.refresh()
+        self.msgwin.refresh()
 
     def run(self):
         '''main loop'''
         while True:
-            self.board[1][1] = 'X'
-            self.isuserturn = True
-
-            while True:
-                self.display()
-                if self.isuserturn:
-                    enter_move(self.board)
-                    if victory_for(self.board, 'O'):
+            self.display()
+            if self.isuserturn:
+                move = next(self.receive(), None)
+                if move is not None:
+                    if self.isvictor('O'):
                         self.display()
-                        print("🎉 You won! Congratulations!")
+                        self.msgwin.addstr("🎉 You won! Congratulations!\n")
+                        self.msgwin.refresh()
                         break
-                else:
-                    self.draw_move()
-                    if victory_for(self.board, 'X'):
-                        self.display()
-                        print("🤖 I won! Better luck next time!")
-                        break
-
-                if not make_list_of_free_fields(self.board):
+            else:
+                self.makemove()
+                if self.isvictor('X'):
                     self.display()
-                    print("😲 It's a tie! Well played!")
+                    self.msgwin.addstr("🤖 I won! Better luck next time!\n")
+                    self.msgwin.refresh()
                     break
 
-                self.isuserturn = not self.isuserturn
+            if not self.getfreefields():
+                self.display()
+                self.msgwin.addstr("😲 It's a tie! Well played!\n")
+                self.msgwin.refresh()
+                break
+            self.isuserturn = not self.isuserturn
 
 def main(stdscr):
-    '''main loop'''
     game = TicTacToe(stdscr)
     game.run()
 
     while game.running:
         try:
-            curses.napms(500) # instead of time.sleep because sigma
+            curses.napms(500)
         except Exception as e:
             return e
-        return "game ended"
+    return "game over"
 
 
 if __name__ == "__main__":
