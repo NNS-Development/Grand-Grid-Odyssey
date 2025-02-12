@@ -1,4 +1,3 @@
-from tomlkit.api import E
 import curses
 from random import choice
 
@@ -12,7 +11,6 @@ class TicTacToe():
         self.setupui()
         self.display()
 
-
     def setupui(self):
         '''initializes the window'''
         curses.curs_set(1)
@@ -20,16 +18,19 @@ class TicTacToe():
 
         self.rows, self.cols = self.stdscr.getmaxyx()
 
-        self.boardwin = curses.newwin(self.rows-1, self.cols, 0, 0)
+        self.boardwin = curses.newwin(self.rows-3, self.cols, 0, 0)
+        self.msgwin = curses.newwin(2, self.cols-2, self.rows, 0)
         self.inputwin = curses.newwin(1, self.cols, self.rows, 0)
 
-    def receive(self):
-        '''receive user input (messages)'''
+        self.msgwin.scrollok(True)
 
-        buf = ''
-        prompt = "> "
+    def receive(self):
+        '''receive user input'''
+
+        prompt = "enter move (1-9): "
 
         while self.isuserturn:
+            buf = ''
             try:
                 self.inputwin.clear()
                 self.inputwin.addstr(0, 0, prompt + buf)
@@ -40,8 +41,22 @@ class TicTacToe():
                 match key:
                     case curses.KEY_ENTER | 10 | 13:
                         if buf.strip():
-                            # TODO: handle user input
-                            pass
+                            try:
+                                buf = int(buf)-1
+                                row, col = divmod(buf, 3)
+                                if self.board[row][col] not in ["O", "X"]:
+                                    self.board[row][col] = "O"
+                                    yield buf
+                                    buf = ''
+                                    return buf
+                                else:
+                                    self.msgwin.addstr("⚠️ Field already occupied! Try again.")
+                                    buf = ''
+                                    continue
+                            except (ValueError, IndexError):
+                                self.msgwin.addstr(0, 0, "⚠️ Invalid input! Enter a number between 1 and 9.")
+                                buf = ''
+                                continue
                     case curses.KEY_BACKSPACE | 127:
                         buf = buf[:-1]
                     case _ if 0 <= key < 256:
@@ -49,18 +64,55 @@ class TicTacToe():
             except Exception as e:
                 self.running = False
 
+    def make_list_of_free_fields(self):
+        return [(r, c) for r in range(3) for c in range(3) if self.board[r][c] not in ['O', 'X']]
+
+    def victory_for(self, sgn):
+        for row in self.board:
+            if all(cell == sgn for cell in row):
+                return True
+        for col in range(3):
+            if all(self.board[row][col] == sgn for row in range(3)):
+                return True
+        if all(self.board[i][i] == sgn for i in range(3)) or all(self.board[i][2 - i] == sgn for i in range(3)):
+            return True
+        return False
+
+    def draw_move(self):
+        free = self.make_list_of_free_fields()
+        best_move = find_best_move(self.board, 'X') or find_best_move(self.board, 'O')
+        if best_move:
+            row, col = best_move
+        else:
+            row, col = choice(free)
+        self.board[row][col] = 'X'
+        displaytext = f"🤖 AI places 'X' at position {row*3+col+1}"
+        self.msgwin.addstr(f"🤖 AI places 'X' at position {row*3+col+1}")
+
+    def find_best_move(self, sgn):
+        free = self.make_list_of_free_fields()
+        for row, col in free:
+            self.board[row][col] = sgn
+            if self.victory_for(sgn):
+                return row, col
+            self.board[row][col] = str(3 * row + col + 1)  # Undo the move
+        return None
+
     def display(self):
         '''displays the board'''
         self.stdscr.clear()
         self.stdscr.refresh()
         win = self.boardwin
+        boardstate = ""
 
-        win.addstr(0, 0, "+-------" * 3, "+", sep="")
+        boardstate += "+-------" * 3 + "+\n"
         for row in self.board:
-            win.addstr(0, 0, "|       " * 3, "|", sep="")
-            win.addstr(0, 0, "|   " + "   |   ".join(row) + "   |")
-            win.addstr(0, 0, "|       " * 3, "|", sep="")
-        win.addstr(0, 0, "+-------" * 3, "+", sep="")
+            boardstate += "|       " * 3 + "|\n"
+            boardstate += "|   " + "   |   ".join(row) + "   |\n"
+            boardstate += "|       " * 3 + "|\n"
+            boardstate += "+-------" * 3 + "+"
+
+        win.addstr(0, 0, boardstate)
 
     def run(self):
         '''main loop'''
@@ -77,7 +129,7 @@ class TicTacToe():
                         print("🎉 You won! Congratulations!")
                         break
                 else:
-                    draw_move()
+                    self.draw_move()
                     if victory_for(self.board, 'X'):
                         self.display()
                         print("🤖 I won! Better luck next time!")
@@ -89,56 +141,6 @@ class TicTacToe():
                     break
 
                 self.isuserturn = not self.isuserturn
-
-            if input("🔄 Play again? (y/n): ").lower() != 'y':
-                print("👋 Thanks for playing! See you next time!")
-                break
-
-def make_list_of_free_fields(board):
-    return [(r, c) for r in range(3) for c in range(3) if board[r][c] not in ['O', 'X']]
-
-def victory_for(board, sgn):
-    for row in board:
-        if all(cell == sgn for cell in row):
-            return True
-    for col in range(3):
-        if all(board[row][col] == sgn for row in range(3)):
-            return True
-    if all(board[i][i] == sgn for i in range(3)) or all(board[i][2 - i] == sgn for i in range(3)):
-        return True
-    return False
-
-def enter_move(board):
-    while True:
-        try:
-            move = int(input("Enter your move (1-9): ")) - 1
-            row, col = divmod(move, 3)
-            if board[row][col] not in ['O', 'X']:
-                board[row][col] = 'O'
-                return
-            else:
-                print("⚠️ Field already occupied! Try again.")
-        except (ValueError, IndexError):
-            print("⚠️ Invalid input! Enter a number between 1 and 9.")
-
-def find_best_move(board, sgn):
-    free = make_list_of_free_fields(board)
-    for row, col in free:
-        board[row][col] = sgn
-        if victory_for(board, sgn):
-            return row, col
-        board[row][col] = str(3 * row + col + 1)  # Undo the move
-    return None
-
-def draw_move(board):
-    free = make_list_of_free_fields(board)
-    best_move = find_best_move(board, 'X') or find_best_move(board, 'O')
-    if best_move:
-        row, col = best_move
-    else:
-        row, col = choice(free)
-    board[row][col] = 'X'
-    print("🤖 AI places 'X' at position", row * 3 + col + 1)
 
 def main(stdscr):
     '''main loop'''
@@ -157,7 +159,7 @@ if __name__ == "__main__":
     error = ""
     try:
         error = curses.wrapper(main)
-    except XeyboardInterrupt:
+    except KeyboardInterrupt:
         pass
     except curses.error:
         pass
