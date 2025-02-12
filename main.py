@@ -123,6 +123,14 @@ class TicTacToe():
         offsetx = (maxx - boardw) // 2
 
         # TODO: use curses.hline and vline
+        for i in range(4):
+            y = offsety + i * (self.side+1)
+            self.boardwin.hline(y, offsetx, curses.ACS_HLINE, boardw)
+
+        for i in range(4):
+            x = offsetx + i * (self.side+1)
+            self.boardwin.vline(offsety, x, curses.ACS_VLINE, boardw)
+
 
         self.boardwin.refresh()
         self.msgwin.refresh()
