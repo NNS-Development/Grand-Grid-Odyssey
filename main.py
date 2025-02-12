@@ -3,12 +3,20 @@ import curses
 from random import choice
 
 class TicTacToe():
-    def __init__(self, stdscr):
+    def __init__(self, stdscr, side=3):
+        self.side = side
         self.stdscr = stdscr
         self.running = True
-        self.board = [[str(3 * j + i + 1) for i in range(3)] for j in range(3)]
+        self.board = [[str(self.side * j + i + 1) for i in range(self.side)] for j in range(self.side)]
         self.board[1][1] = 'X'
         self.isuserturn = True
+
+        # colors for better ui
+        if curses.has_colors():
+            curses.start_color()
+            curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)   # x
+            curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)  # o
+            curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK) # others
 
         self.setupui()
         self.display()
@@ -107,23 +115,14 @@ class TicTacToe():
         self.stdscr.clear()
         self.boardwin.clear()
 
-        boardstate = "+-------" * 3 + "+\n"
-        for row in self.board:
-            boardstate += "|       " * 3 + "|\n"
-            boardstate += "|   " + "   |   ".join(row) + "   |\n"
-            boardstate += "|       " * 3 + "|\n"
-            boardstate += "+-------" * 3 + "+\n"
-
-        boardlines = boardstate.splitlines()
-        boardh = len(boardlines)
-        boardw = max(len(line) for line in boardlines)
+        boardh = self.side * 3 + self.side+1
+        boardw = self.side * 7 + self.side+1
 
         maxy, maxx = self.boardwin.getmaxyx()
         offsety = (maxy - boardh) // 2
         offsetx = (maxx - boardw) // 2
 
-        for i, line in enumerate(boardlines):
-            self.boardwin.addstr(offsety + i, offsetx, line)
+        # TODO: use curses.hline and vline
 
         self.boardwin.refresh()
         self.msgwin.refresh()
