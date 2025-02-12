@@ -1,4 +1,4 @@
-python3 -m pip3 install -U pyinstaller
+python3 -m pip install -U PyInstaller
 
 pyinstaller --onefile main.py -
 
