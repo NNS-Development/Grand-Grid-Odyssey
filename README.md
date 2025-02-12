@@ -6,8 +6,8 @@ MAJOR improvements by (me)[https://github.com/ellipticobj]
 just download this repo, then run main.py.
 
 ## screenshots
-![tie](http://github.com/ellipticobj/TicTacToe/blob/main/images/tie.png)
-![newgame](http://github.com/ellipticobj/TicTacToe/blob/main/images/newgame.ng)
+![tie](images/tie.png)
+![newgame](images/newgame.png)
 
 ## roadmap
 choose to start first  
