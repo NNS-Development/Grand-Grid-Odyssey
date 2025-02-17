@@ -4,9 +4,12 @@ Python TicTacToe game against a bot
 ## how to play
 just download this repo, then run main.py or download an executable from [here](https://github.com/ellipticobj/TicTacToe/releases/tag/v0.0.0)
 ## Features
+
 ### Modes
 Single Player Mode: Play against the AI.  
 Multiplayer Mode: Play against another player locally.  
+    Ability to go first if selected
+
 
 ## screenshots
 ![tie](images/tie.png)
