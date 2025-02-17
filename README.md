@@ -1,5 +1,6 @@
-# TicTacToe
-Python TicTacToe game against a bot  
+# Grand Grid Odyssey
+Tic Taco Toe but with really overcomplicated features!
+Runs on Python (so far)
 
 ## how to play
 just download this repo, then run main.py or download an executable from [here](https://github.com/ellipticobj/TicTacToe/releases/tag/v0.0.0)
@@ -32,8 +33,8 @@ Difficulty Levels for AI: Implement different AI difficulties:
   Medium: Some strategic moves.  
   Hard: Implement the Minimax algorithm for optimal moves.  
 Multiplayer Over Network: Let players connect and play online.  
-Timed Mode: Add a countdown timer for each turn to increase the challenge.  
-Streak Mode: Track consecutive wins/losses against the AI.  
+Timed Mode: Add a countdown timer for each turn to increase the challenge.  done
+Streak Mode: Track consecutive wins/losses against the AI.  done.
 ### UI/UX Improvements:
 Mouse Support: Allow users to click on cells instead of using keyboard input.  
 Animations & Effects: Add smooth transitions, move effects, or simple animations.  
