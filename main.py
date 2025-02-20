@@ -472,7 +472,7 @@ def main(stdscr: Any) -> None:
                 save_streak(streak)
                 stdscr.addstr(result_msg + "\n")
 
-            stdscr.addstr("Press 'r' to restart, 'm' for main menu, or 'q' to quit.\n(R\m\q) > ")
+            stdscr.addstr("Press 'r' to restart, 'm' for main menu, or 'q' to quit.\n(R/m/q) > ")
             stdscr.refresh()
             key = stdscr.getch()
             if key in [ord('r'), ord('R')]:
