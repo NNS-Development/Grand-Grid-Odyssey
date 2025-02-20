@@ -297,6 +297,7 @@ class TicTacToe:
         return None
     
     def p1turn(self) -> Optional[str]:
+        '''! Deprecated ! use pturn instead'''
         prompt = "Player 1 (X), enter move (1-9): "
         move = self.get_move(prompt)
         if move is None:
@@ -304,7 +305,9 @@ class TicTacToe:
             self.msgwin.addstr("⏰ Time's up! Player 1 loses by timeout!\n")
             self.msgwin.refresh()
             return "O"  # Player2 wins
-        row, col = move
+        
+        row: int = move[0]
+        col: int = move[1]
         self.board[row][col] = self.player1_token
         if self.isvictor(self.player1_token):
             self.display()
@@ -315,6 +318,7 @@ class TicTacToe:
         return None
     
     def p2turn(self) -> Optional[str]:
+        '''! Deprecated! use pturn instead'''
         prompt = "Player 2 (O), enter move (1-9): "
         move = self.get_move(prompt)
         if move is None:
@@ -322,7 +326,9 @@ class TicTacToe:
             self.msgwin.addstr("⏰ Time's up! Player 2 loses by timeout!\n")
             self.msgwin.refresh()
             return "X"  # Player1 wins
-        row, col = move
+        
+        row: int = move[0]
+        col: int = move[1]
         self.board[row][col] = self.player2_token
         if self.isvictor(self.player2_token):
             self.display()
@@ -330,6 +336,38 @@ class TicTacToe:
             self.msgwin.refresh()
             return "O"
         self.current_turn = "player1"
+        return None
+    
+    def pturn(self, player: str) -> Optional[str]:
+        '''
+        two player mode
+        player: "1" or "2"
+        '''
+        prompt: str = f"Player {player} ({self.player1_token if player == '1' else self.player2_token}), enter move (1-9): "
+        token = self.player1_token if player == "1" else self.player2_token
+        timeout_msg = f"⏰ Time's up! Player {player} loses by timeout!\n"
+        win_msg = f"🎉 Player {player} ({token}) won! Congratulations!\n"
+        opponent_result = self.player2_token if player == "1" else self.player1_token
+        win_result = self.player1_token if player == "1" else self.player2_token
+        next_turn = "player2" if player == "1" else "player1"
+
+        move: Optional[Tuple[int, int]] = self.get_move(prompt)
+        if move is None:
+            self.display()
+            self.msgwin.addstr(timeout_msg)
+            self.msgwin.refresh()
+            return opponent_result
+        
+        row: int = move[0]
+        col: int = move[1]
+        self.board[row][col] = token
+
+        if self.isvictor(token):
+            self.display()
+            self.msgwin.addstr(win_msg)
+            self.msgwin.refresh()
+            return win_result
+        self.current_turn = next_turn
         return None
 
     def run(self) -> str:
@@ -342,9 +380,9 @@ class TicTacToe:
                     self.aiturn()
             elif self.mode == "2p":
                 if self.current_turn == "player1":
-                    self.p1turn()
+                    self.pturn("1")
                 else:
-                    self.p2turn()
+                    self.pturn("2")
             if not self.getfreefields():
                 self.display()
                 self.msgwin.addstr("😲 It's a tie! Well played!\n")
