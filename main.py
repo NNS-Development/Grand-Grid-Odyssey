@@ -2,51 +2,56 @@ import curses
 import json
 import os
 import time
+from typing import Dict, List, Any, Optional, Tuple
 from random import choice
 
 STREAK_FILE = "streak.json"
+Board = List[List[str]]
 
-def load_streak():
+def load_streak() -> Dict[str, int]:
+    '''loads the win/loss streak from file'''
+    data: Dict[str, int] = {"win_streak": 0, "loss_streak": 0}
     if os.path.exists(STREAK_FILE):
         with open(STREAK_FILE, "r") as f:
             try:
                 data = json.load(f)
             except json.JSONDecodeError:
-                data = {"win_streak": 0, "loss_streak": 0}
-        return data
-    else:
-        return {"win_streak": 0, "loss_streak": 0}
+                pass
+    return data
 
-def save_streak(streak):
+def save_streak(streak) -> None:
+    '''saves the win/loss streak to file'''
     with open(STREAK_FILE, "w") as f:
         json.dump(streak, f)
 
 class TicTacToe:
-    def __init__(self, stdscr, side=3, mode="ai", human_first=True, timed_mode=False, turn_time=10):
-        self.side = side
-        self.stdscr = stdscr
-        self.mode = mode
-        self.human_first = human_first
-        self.timed_mode = timed_mode      # Enable timed mode?
-        self.turn_time = turn_time        # Seconds per turn
-        self.running = True
+    def __init__(self, stdscr: Any, side: int = 3, mode: str = "ai", human_first: bool = True, timed_mode: bool = False, turn_time: int = 10) -> None:
+        self.side: int = side
+        self.stdscr: Any = stdscr
+        self.mode: str = mode
+        self.human_first: bool = human_first
+        self.timed_mode: bool= timed_mode      # Enable timed mode?
+        self.turn_time: int = turn_time        # Seconds per turn
+        self.running: bool = True
 
         # Initialize board with cell numbers
-        self.board = [[str(self.side * j + i + 1) for i in range(self.side)] for j in range(self.side)]
+        self.board: Board = [
+            [str(self.side * j + i + 1) for i in range(self.side)] 
+            for j in range(self.side)
+        ]
 
         # Set tokens and starting turn
+        self.current_turn: str = "ai"
         if self.mode == "ai":
+            self.human_token: str = "O"
+            self.ai_token: str = "X"
             if self.human_first:
                 self.human_token = "X"
                 self.ai_token = "O"
                 self.current_turn = "human"
-            else:
-                self.human_token = "O"
-                self.ai_token = "X"
-                self.current_turn = "ai"
         elif self.mode == "2p":
-            self.player1_token = "X"
-            self.player2_token = "O"
+            self.player1_token: str = "X"
+            self.player2_token: str = "O"
             self.current_turn = "player1"
 
         # Initialize colors if available
@@ -59,26 +64,85 @@ class TicTacToe:
         self.setupui()
         self.display()
 
-    def setupui(self):
+    def setupui(self) -> None:
         curses.curs_set(1)
         self.stdscr.nodelay(1)
-        self.rows, self.cols = self.stdscr.getmaxyx()
-        self.boardwin = curses.newwin(self.rows - 2, self.cols, 0, 0)
-        self.msgwin = curses.newwin(2, self.cols, self.rows - 2, 0)
-        self.inputwin = curses.newwin(1, self.cols, self.rows - 1, 0)
+        rowcol: Tuple[int, int] = self.stdscr.getmaxyx()
+        self.rows: int = rowcol[0]
+        self.cols: int = rowcol[1]
+        self.boardwin: curses.window = curses.newwin(self.rows - 2, self.cols, 0, 0)
+        self.msgwin: curses.window = curses.newwin(2, self.cols, self.rows - 2, 0)
+        self.inputwin: curses.window = curses.newwin(1, self.cols, self.rows - 1, 0)
         self.msgwin.scrollok(True)
         self.inputwin.nodelay(True)
 
-    def get_move_normal(self, prompt):
-        buf = ""
+    def __get_move_normal(self, prompt: str) -> Tuple[int, int]:
+        '''gets user input for move'''
+        buf: str = "" # buffer to store user input
         self.inputwin.nodelay(False)
         while True:
+            # displays the prompt and what the user already inputs every cycle
             self.inputwin.clear()
             self.inputwin.addstr(0, 0, prompt + buf)
             self.inputwin.refresh()
-            key = self.inputwin.getch()
-            if key in [curses.KEY_ENTER, 10, 13]:
-                if buf.strip():
+
+            key: int = self.inputwin.getch() # whatever key the user inputs
+            if key in [curses.KEY_ENTER, 10, 13]: # if user presses enter
+                if not buf.strip():
+                    continue
+                try:
+                    move: int = int(buf.strip())
+                    if move < 1 or move > 9:
+                        self.msgwin.addstr("⚠️ Invalid input! Enter a number between 1 and 9.\n")
+                        self.msgwin.refresh()
+                        buf = ""
+                        continue
+                    # funny math thing to get the row and column from the move
+                    rowcol: Tuple[int, int] = divmod(move - 1, 3)
+                    row: int = rowcol[0]
+                    col: int = rowcol[1]
+                    if self.board[row][col] in ["X", "O"]:
+                        self.msgwin.addstr("⚠️ Field already occupied! Try again.\n")
+                        self.msgwin.refresh()
+                        buf = ""
+                        continue
+                    return row, col
+                except ValueError:
+                    self.msgwin.addstr("⚠️ Invalid input! Enter a number between 1 and 9.\n")
+                    self.msgwin.refresh()
+                    buf = ""
+                    continue
+            elif key in [curses.KEY_BACKSPACE, 127]: # if user presses backspace
+                buf = buf[:-1]
+            elif 0 <= key < 256: # any other key
+                buf += chr(key)
+
+    def __get_move_timed(self, prompt: str) -> Optional[Tuple[int, int]]:
+        '''same as get_move_normal but with a timer'''
+        # vars init
+        buf: str = ""
+        start_time: float = time.time()
+        total_time: int = self.turn_time
+        elapsed: float = 0.0
+        remaining: int = 0
+        self.inputwin.nodelay(True)
+
+        while True:
+            elapsed = time.time() - start_time
+            remaining = int(total_time - elapsed)
+            if remaining <= 0:
+                self.msgwin.clear()
+                self.msgwin.addstr("⏰ Time's up! You lose by timeout!\n")
+                self.msgwin.refresh()
+                return None
+            self.inputwin.clear()
+            self.inputwin.addstr(0, 0, f"{prompt} (Time remaining: {remaining} sec): " + buf)
+            self.inputwin.refresh()
+            key: int = self.inputwin.getch()
+            if key != -1:
+                if key in [curses.KEY_ENTER, 10, 13]:
+                    if not buf.strip():
+                        continue
                     try:
                         move = int(buf.strip())
                         if move < 1 or move > 9:
@@ -98,107 +162,80 @@ class TicTacToe:
                         self.msgwin.refresh()
                         buf = ""
                         continue
-            elif key in [curses.KEY_BACKSPACE, 127]:
-                buf = buf[:-1]
-            elif 0 <= key < 256:
-                buf += chr(key)
-
-    def get_move_timed(self, prompt):
-        buf = ""
-        start_time = time.time()
-        total_time = self.turn_time
-        self.inputwin.nodelay(True)
-        while True:
-            elapsed = time.time() - start_time
-            remaining = int(total_time - elapsed)
-            if remaining <= 0:
-                self.msgwin.clear()
-                self.msgwin.addstr("⏰ Time's up! You lose by timeout!\n")
-                self.msgwin.refresh()
-                return None
-            self.inputwin.clear()
-            self.inputwin.addstr(0, 0, f"{prompt} (Time remaining: {remaining} sec): " + buf)
-            self.inputwin.refresh()
-            key = self.inputwin.getch()
-            if key != -1:
-                if key in [curses.KEY_ENTER, 10, 13]:
-                    if buf.strip():
-                        try:
-                            move = int(buf.strip())
-                            if move < 1 or move > 9:
-                                self.msgwin.addstr("⚠️ Invalid input! Enter a number between 1 and 9.\n")
-                                self.msgwin.refresh()
-                                buf = ""
-                                continue
-                            row, col = divmod(move - 1, 3)
-                            if self.board[row][col] in ["X", "O"]:
-                                self.msgwin.addstr("⚠️ Field already occupied! Try again.\n")
-                                self.msgwin.refresh()
-                                buf = ""
-                                continue
-                            return row, col
-                        except ValueError:
-                            self.msgwin.addstr("⚠️ Invalid input! Enter a number between 1 and 9.\n")
-                            self.msgwin.refresh()
-                            buf = ""
-                            continue
                 elif key in [curses.KEY_BACKSPACE, 127]:
                     buf = buf[:-1]
                 elif 0 <= key < 256:
                     buf += chr(key)
             time.sleep(0.1)
 
-    def get_move(self, prompt):
+    def get_move(self, prompt: str) -> Optional[Tuple[int, int]]:
+        '''wrapper function for get_move_normal and get_move_timed'''
         if self.timed_mode:
-            return self.get_move_timed(prompt)
-        else:
-            return self.get_move_normal(prompt)
+            return self.__get_move_timed(prompt)
+        return self.__get_move_normal(prompt)
 
-    def getfreefields(self):
+    def getfreefields(self) -> List[Tuple[int, int]]:
+        '''returns a list of free fields on the board'''
         return [(r, c) for r in range(3) for c in range(3) if self.board[r][c] not in ['X', 'O']]
 
-    def isvictor(self, sgn):
+    def isvictor(self, sgn: str) -> bool:
+        '''check if player with token sgn has won'''
         for row in self.board:
             if all(cell == sgn for cell in row):
                 return True
         for col in range(3):
             if all(self.board[row][col] == sgn for row in range(3)):
                 return True
+            
         if all(self.board[i][i] == sgn for i in range(3)) or all(self.board[i][2 - i] == sgn for i in range(3)):
             return True
         return False
 
-    def getbestmove(self, sgn):
+    def getbestmove(self, sgn: str) -> Optional[Tuple[int, int]]:
+        '''ai's algorithm'''
         free = self.getfreefields()
         for row, col in free:
-            orig = self.board[row][col]
+            orig: str = self.board[row][col]
             self.board[row][col] = sgn
             if self.isvictor(sgn):
                 self.board[row][col] = orig
                 return row, col
             self.board[row][col] = orig
+        return None
 
-    def makemove(self):
-        free = self.getfreefields()
+    def makemove(self) -> str:
+        free: List[Tuple[int, int]] = self.getfreefields()
         if not free:
             return ""
-        best_move = self.getbestmove(self.ai_token)
+        best_move: Optional[Tuple[int, int]] = self.getbestmove(self.ai_token)
         if not best_move:
             best_move = self.getbestmove(self.human_token)
         if not best_move:
             best_move = choice(free)
-        row, col = best_move
+        
+        row: int = best_move[0]
+        col: int = best_move[1]
         self.board[row][col] = self.ai_token
+
         return f"🤖 AI places '{self.ai_token}' at position {row * 3 + col + 1}\n"
 
-    def display(self):
+    def display(self) -> None:
         self.stdscr.clear()
         self.boardwin.clear()
-        boardh = self.side * 3 + self.side + 1
-        boardw = self.side * 7 + self.side + 1
-        maxy, maxx = self.boardwin.getmaxyx()
-        offsety = (maxy - boardh) // 2
-        offsetx = (maxx - boardw) // 2
+
+        # var init
+        boardh: int = self.side * 3 + self.side + 1
+        boardw: int = self.side * 7 + self.side + 1
+        maxes: Tuple[int, int] = self.boardwin.getmaxyx()
+        maxy: int = maxes[0]
+        maxx: int = maxes[1]
+        offsety: int = (maxy - boardh) // 2
+        offsetx: int = (maxx - boardw) // 2
+        y: int = 0
+        x: int = 0
+        celly: int = 0
+        cellx: int = 0
+
         for i in range(self.side + 1):
             y = offsety + i * 4
             self.boardwin.hline(y, offsetx, curses.ACS_HLINE, boardw)
@@ -225,19 +262,20 @@ class TicTacToe:
         self.boardwin.refresh()
         self.msgwin.refresh()
 
-    def run(self):
+    def run(self) -> str:
         while True:
             self.display()
             if self.mode == "ai":
                 if self.current_turn == "human":
-                    prompt = f"Your move ({self.human_token}), enter move (1-9): "
-                    move = self.get_move(prompt)
+                    prompt: str = f"Your move ({self.human_token}), enter move (1-9): "
+                    move: Optional[Tuple[int, int]] = self.get_move(prompt)
                     if move is None:
                         self.display()
                         self.msgwin.addstr("⏰ Time's up! You lose by timeout!\n")
                         self.msgwin.refresh()
                         return self.ai_token
-                    row, col = move
+                    row: int = move[0]
+                    col: int = move[1]
                     self.board[row][col] = self.human_token
                     if self.isvictor(self.human_token):
                         self.display()
