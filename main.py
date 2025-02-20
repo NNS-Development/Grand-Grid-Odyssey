@@ -262,78 +262,97 @@ class TicTacToe:
         self.boardwin.refresh()
         self.msgwin.refresh()
 
+    def humanturn(self) -> Optional[str]:
+        '''human's turn'''
+        prompt: str = f"Your move ({self.human_token}), enter move (1-9): "
+        move: Optional[Tuple[int, int]] = self.get_move(prompt)
+        if move is None:
+            self.display()
+            self.msgwin.addstr("⏰ Time's up! You lose by timeout!\n")
+            self.msgwin.refresh()
+            return self.ai_token
+        row: int = move[0]
+        col: int = move[1]
+        self.board[row][col] = self.human_token
+        if self.isvictor(self.human_token):
+            self.display()
+            self.msgwin.addstr("🎉 You won! Congratulations!\n")
+            self.msgwin.refresh()
+            return self.human_token
+        self.current_turn = "ai"
+        return None
+    
+    def aiturn(self) -> Optional[str]:
+        '''ai's turn'''
+        msg = self.makemove()
+        if msg:
+            self.msgwin.addstr(msg)
+            self.msgwin.refresh()
+        if self.isvictor(self.ai_token):
+            self.display()
+            self.msgwin.addstr("🤖 I won! Better luck next time!\n")
+            self.msgwin.refresh()
+            return self.ai_token
+        self.current_turn = "human"
+        return None
+    
+    def p1turn(self) -> Optional[str]:
+        prompt = "Player 1 (X), enter move (1-9): "
+        move = self.get_move(prompt)
+        if move is None:
+            self.display()
+            self.msgwin.addstr("⏰ Time's up! Player 1 loses by timeout!\n")
+            self.msgwin.refresh()
+            return "O"  # Player2 wins
+        row, col = move
+        self.board[row][col] = self.player1_token
+        if self.isvictor(self.player1_token):
+            self.display()
+            self.msgwin.addstr("🎉 Player 1 (X) won! Congratulations!\n")
+            self.msgwin.refresh()
+            return "X"
+        self.current_turn = "player2"
+        return None
+    
+    def p2turn(self) -> Optional[str]:
+        prompt = "Player 2 (O), enter move (1-9): "
+        move = self.get_move(prompt)
+        if move is None:
+            self.display()
+            self.msgwin.addstr("⏰ Time's up! Player 2 loses by timeout!\n")
+            self.msgwin.refresh()
+            return "X"  # Player1 wins
+        row, col = move
+        self.board[row][col] = self.player2_token
+        if self.isvictor(self.player2_token):
+            self.display()
+            self.msgwin.addstr("🎉 Player 2 (O) won! Congratulations!\n")
+            self.msgwin.refresh()
+            return "O"
+        self.current_turn = "player1"
+        return None
+
     def run(self) -> str:
         while True:
             self.display()
             if self.mode == "ai":
                 if self.current_turn == "human":
-                    prompt: str = f"Your move ({self.human_token}), enter move (1-9): "
-                    move: Optional[Tuple[int, int]] = self.get_move(prompt)
-                    if move is None:
-                        self.display()
-                        self.msgwin.addstr("⏰ Time's up! You lose by timeout!\n")
-                        self.msgwin.refresh()
-                        return self.ai_token
-                    row: int = move[0]
-                    col: int = move[1]
-                    self.board[row][col] = self.human_token
-                    if self.isvictor(self.human_token):
-                        self.display()
-                        self.msgwin.addstr("🎉 You won! Congratulations!\n")
-                        self.msgwin.refresh()
-                        return self.human_token
-                    self.current_turn = "ai"
+                    self.humanturn()
                 else:
-                    msg = self.makemove()
-                    if msg:
-                        self.msgwin.addstr(msg)
-                        self.msgwin.refresh()
-                    if self.isvictor(self.ai_token):
-                        self.display()
-                        self.msgwin.addstr("🤖 I won! Better luck next time!\n")
-                        self.msgwin.refresh()
-                        return self.ai_token
-                    self.current_turn = "human"
+                    self.aiturn()
             elif self.mode == "2p":
                 if self.current_turn == "player1":
-                    prompt = "Player 1 (X), enter move (1-9): "
-                    move = self.get_move(prompt)
-                    if move is None:
-                        self.display()
-                        self.msgwin.addstr("⏰ Time's up! Player 1 loses by timeout!\n")
-                        self.msgwin.refresh()
-                        return "O"  # Player2 wins
-                    row, col = move
-                    self.board[row][col] = self.player1_token
-                    if self.isvictor(self.player1_token):
-                        self.display()
-                        self.msgwin.addstr("🎉 Player 1 (X) won! Congratulations!\n")
-                        self.msgwin.refresh()
-                        return "X"
-                    self.current_turn = "player2"
+                    self.p1turn()
                 else:
-                    prompt = "Player 2 (O), enter move (1-9): "
-                    move = self.get_move(prompt)
-                    if move is None:
-                        self.display()
-                        self.msgwin.addstr("⏰ Time's up! Player 2 loses by timeout!\n")
-                        self.msgwin.refresh()
-                        return "X"  # Player1 wins
-                    row, col = move
-                    self.board[row][col] = self.player2_token
-                    if self.isvictor(self.player2_token):
-                        self.display()
-                        self.msgwin.addstr("🎉 Player 2 (O) won! Congratulations!\n")
-                        self.msgwin.refresh()
-                        return "O"
-                    self.current_turn = "player1"
+                    self.p2turn()
             if not self.getfreefields():
                 self.display()
                 self.msgwin.addstr("😲 It's a tie! Well played!\n")
                 self.msgwin.refresh()
                 return "tie"
 
-def main_menu(stdscr):
+def main_menu(stdscr: Any) -> Tuple[str, bool, bool]:
+    '''main menu'''
     stdscr.clear()
     stdscr.addstr("Welcome to Tic Tac Toe!\n\n")
     stdscr.addstr("Choose game mode:\n")
@@ -341,24 +360,30 @@ def main_menu(stdscr):
     stdscr.addstr("  2. Two Player mode\n")
     stdscr.addstr("\nPress 1 or 2 to choose.\n")
     stdscr.refresh()
+
+    key: str = ""
+    mode: str = ""
     while True:
         key = stdscr.getch()
         if key in [ord('1'), ord('2')]:
             mode = "ai" if key == ord('1') else "2p"
             break
-    timed_mode = False
+
+    timed_mode: bool = False
     stdscr.clear()
     stdscr.addstr("Enable Timed Mode? (Each turn has a countdown timer) (y/n): ")
     stdscr.refresh()
+
     while True:
         key = stdscr.getch()
         if key in [ord('y'), ord('Y')]:
             timed_mode = True
             break
         elif key in [ord('n'), ord('N')]:
-            timed_mode = False
             break
+
     human_first = True
+
     if mode == "ai":
         stdscr.clear()
         stdscr.addstr("Do you want to start first? (y/n): ")
@@ -371,16 +396,22 @@ def main_menu(stdscr):
             elif key in [ord('n'), ord('N')]:
                 human_first = False
                 break
+
     return mode, human_first, timed_mode
 
-def main(stdscr):
+def main(stdscr: Any) -> None:
     curses.curs_set(0)  # Hide cursor in menus
-    streak = load_streak()
+    streak: Dict[str, int] = load_streak()
     while True:
-        mode, human_first, timed_mode = main_menu(stdscr)
+        vars = main_menu(stdscr)
+        mode: str = vars[0]
+        human_first: bool = vars[1]
+        timed_mode: bool = vars[2] 
+
         while True:
-            game = TicTacToe(stdscr, mode=mode, human_first=human_first, timed_mode=timed_mode)
-            winner = game.run()
+            game: TicTacToe = TicTacToe(stdscr, mode=mode, human_first=human_first, timed_mode=timed_mode)
+            winner: str = game.run()
+            result_msg: str = ""
             stdscr.nodelay(False)
             stdscr.clear()
             if mode == "2p" and winner in ["X", "O"]:
@@ -402,7 +433,8 @@ def main(stdscr):
                     result_msg = "😐 It's a tie! Streak reset."
                 save_streak(streak)
                 stdscr.addstr(result_msg + "\n")
-            stdscr.addstr("Press 'r' to restart, 'm' for main menu, or 'q' to quit.\n")
+
+            stdscr.addstr("Press 'r' to restart, 'm' for main menu, or 'q' to quit.\n(R\m\q) > ")
             stdscr.refresh()
             key = stdscr.getch()
             if key in [ord('r'), ord('R')]:
