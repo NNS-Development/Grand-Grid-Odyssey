@@ -3,10 +3,11 @@ import json
 import os
 import time
 from random import choice
+from typing import Dict, Tuple, Optional, List
 
 STREAK_FILE = "streak.json"
 
-def load_streak():
+def load_streak() -> Dict[str, int]:
     if os.path.exists(STREAK_FILE):
         with open(STREAK_FILE, "r") as f:
             try:
@@ -17,12 +18,12 @@ def load_streak():
     else:
         return {"win_streak": 0, "loss_streak": 0}
 
-def save_streak(streak):
+def save_streak(streak: Dict[str, int]) -> None:
     with open(STREAK_FILE, "w") as f:
         json.dump(streak, f)
 
 class TicTacToe:
-    def __init__(self, stdscr, side=3, mode="ai", human_first=True, timed_mode=False, turn_time=10):
+    def __init__(self, stdscr: curses.window, side: int = 3, mode: str = "ai", human_first: bool = True, timed_mode: bool = False, turn_time: int = 10) -> None:
         self.side = side
         self.stdscr = stdscr
         self.mode = mode
@@ -32,7 +33,7 @@ class TicTacToe:
         self.running = True
 
         # Initialize board with cell numbers
-        self.board = [[str(self.side * j + i + 1) for i in range(self.side)] for j in range(self.side)]
+        self.board: List[List[str]] = [[str(self.side * j + i + 1) for i in range(self.side)] for j in range(self.side)]
 
         # Set tokens and starting turn
         if self.mode == "ai":
@@ -59,7 +60,7 @@ class TicTacToe:
         self.setupui()
         self.display()
 
-    def setupui(self):
+    def setupui(self) -> None:
         curses.curs_set(1)
         self.stdscr.nodelay(1)
         self.rows, self.cols = self.stdscr.getmaxyx()
@@ -69,7 +70,7 @@ class TicTacToe:
         self.msgwin.scrollok(True)
         self.inputwin.nodelay(True)
 
-    def get_move_normal(self, prompt):
+    def get_move_normal(self, prompt: str) -> Tuple[int, int]:
         buf = ""
         self.inputwin.nodelay(False)
         while True:
@@ -103,7 +104,7 @@ class TicTacToe:
             elif 0 <= key < 256:
                 buf += chr(key)
 
-    def get_move_timed(self, prompt):
+    def get_move_timed(self, prompt: str) -> Optional[Tuple[int, int]]:
         buf = ""
         start_time = time.time()
         total_time = self.turn_time
@@ -148,16 +149,16 @@ class TicTacToe:
                     buf += chr(key)
             time.sleep(0.1)
 
-    def get_move(self, prompt):
+    def get_move(self, prompt: str) -> Optional[Tuple[int, int]]:
         if self.timed_mode:
             return self.get_move_timed(prompt)
         else:
             return self.get_move_normal(prompt)
 
-    def getfreefields(self):
+    def getfreefields(self) -> List[Tuple[int, int]]:
         return [(r, c) for r in range(3) for c in range(3) if self.board[r][c] not in ['X', 'O']]
 
-    def isvictor(self, sgn):
+    def isvictor(self, sgn: str) -> bool:
         for row in self.board:
             if all(cell == sgn for cell in row):
                 return True
@@ -168,7 +169,7 @@ class TicTacToe:
             return True
         return False
 
-    def getbestmove(self, sgn):
+    def getbestmove(self, sgn: str) -> Optional[Tuple[int, int]]:
         free = self.getfreefields()
         for row, col in free:
             orig = self.board[row][col]
@@ -177,8 +178,9 @@ class TicTacToe:
                 self.board[row][col] = orig
                 return row, col
             self.board[row][col] = orig
+        return None
 
-    def makemove(self):
+    def makemove(self) -> str:
         free = self.getfreefields()
         if not free:
             return ""
@@ -191,7 +193,7 @@ class TicTacToe:
         self.board[row][col] = self.ai_token
         return f"🤖 AI places '{self.ai_token}' at position {row * 3 + col + 1}\n"
 
-    def display(self):
+    def display(self) -> None:
         self.stdscr.clear()
         self.boardwin.clear()
         boardh = self.side * 3 + self.side + 1
@@ -225,7 +227,7 @@ class TicTacToe:
         self.boardwin.refresh()
         self.msgwin.refresh()
 
-    def run(self):
+    def run(self) -> str:
         while True:
             self.display()
             if self.mode == "ai":
@@ -295,7 +297,7 @@ class TicTacToe:
                 self.msgwin.refresh()
                 return "tie"
 
-def main_menu(stdscr):
+def main_menu(stdscr: curses.window) -> Tuple[str, bool, bool]:
     stdscr.clear()
     stdscr.addstr("Welcome to Tic Tac Toe!\n\n")
     stdscr.addstr("Choose game mode:\n")
@@ -335,7 +337,7 @@ def main_menu(stdscr):
                 break
     return mode, human_first, timed_mode
 
-def main(stdscr):
+def main(stdscr: curses.window) -> None:
     curses.curs_set(0)  # Hide cursor in menus
     streak = load_streak()
     while True:
