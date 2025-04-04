@@ -70,6 +70,14 @@ class TicTacToe:
         self.msgwin.scrollok(True)
         self.inputwin.nodelay(True)
 
+        if curses.has_colors():
+            curses.start_color()
+            # Only apply background color to specific windows
+            self.boardwin.bkgd(' ', curses.color_pair(0))
+            self.msgwin.bkgd(' ', curses.color_pair(0))
+            self.inputwin.bkgd(' ', curses.color_pair(0))
+
+
     def get_move_normal(self, prompt: str) -> Tuple[int, int]:
         buf = ""
         self.inputwin.nodelay(False)
@@ -383,3 +391,5 @@ if __name__ == "__main__":
         pass
     except curses.error:
         pass
+    finally:
+        curses.endwin()

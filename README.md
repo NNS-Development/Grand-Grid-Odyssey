@@ -1,51 +1,50 @@
-# Grand Grid Odyssey
-Tic Taco Toe but with really overcomplicated features!
-Runs on Python (so far)
+# Welcome to your Expo app 👋
 
-## how to play
-just download this repo, then run main.py or download an executable from [here](https://github.com/ellipticobj/TicTacToe/releases/tag/v0.0.0)
-## Features
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-### Modes
-Single Player Mode: Play against the AI.  
-Multiplayer Mode: Play against another player locally.  
-    Ability to go first if selected
+## Get started
 
+1. Install dependencies
 
-## screenshots
-![tie](images/tie.png)
-![newgame](images/newgame.png)
+   ```bash
+   npm install
+   ```
 
-## building
-run ```./build.sh```  
-note that this may not work on all systems. do not open an issue as i will not care.  
-if it doesnt work, check out [pyinstaller](https://pyinstaller.org/en/stable/)
+2. Start the app
 
-## Potential features to add
-add option to choose to start first  
-add a two player mode (instead of just vs ai)
+   ```bash
+    npx expo start
+   ```
 
-### Gameplay Enhancements:
-Custom Board Size: Allow players to choose different grid sizes (e.g., 4x4, 5x5) and adjust the winning conditions accordingly.  
-Undo Move Feature: Let players undo their last move in case of a mistake.  
-Difficulty Levels for AI: Implement different AI difficulties:  
-  Easy: Random moves.  
-  Medium: Some strategic moves.  
-  Hard: Implement the Minimax algorithm for optimal moves.  
-Multiplayer Over Network: Let players connect and play online.  
-Timed Mode: Add a countdown timer for each turn to increase the challenge.  done
-Streak Mode: Track consecutive wins/losses against the AI.  done.
-### UI/UX Improvements:
-Mouse Support: Allow users to click on cells instead of using keyboard input.  
-Animations & Effects: Add smooth transitions, move effects, or simple animations.  
-Scoreboard: Track and display the number of games won/lost/drawn.  
-Theme Selection: Offer different visual themes (dark mode, neon, classic, etc.).  
-Sound Effects & Music: Add sounds for moves, wins, losses, and menu navigation.  
-Better Text Input Handling: Improve input feedback with dynamic validation.  
-### Customization Options:
-Custom Symbols: Let players use emojis or custom letters instead of 'X' and 'O'.  
-Game Mode Variations: Implement Gomoku (Five-in-a-Row) or Ultimate Tic-Tac-Toe.  
-Power-Ups or Special Moves: Introduce unique twists like “skip opponent’s turn” or “block a cell”.  
-Achievements & Challenges: Unlockable badges for winning streaks, perfect games, etc.  
+In the output, you'll find options to open the app in a
 
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Get a fresh project
+
+When you're ready, run:
+
+```bash
+npm run reset-project
+```
+
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+
+## Learn more
+
+To learn more about developing your project with Expo, look at the following resources:
+
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+
+## Join the community
+
+Join our community of developers creating universal apps.
+
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
